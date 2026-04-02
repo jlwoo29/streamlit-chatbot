@@ -1,12 +1,13 @@
 import streamlit as st
 from google import genai
+from google.genai import types
 
 import os
 from dotenv import load_dotenv
 
-st.title(":orange[:material/smart_toy:] 챗봇")
+st.title(":violet[:material/face_3:] 전서영")
 
-st.caption("제미나이예요.")
+st.caption("전서영이에요.")
 
 MODEL_NAME = "gemini-2.5-flash"
 
@@ -25,7 +26,10 @@ client = get_client()
 
 if "chat_session" not in st.session_state:
     st.session_state.chat_session = client.chats.create(
-        model=MODEL_NAME
+        model=MODEL_NAME,
+        config=types.GenerateContentConfig(
+            system_instruction='너는 전서영이야 가위바위보 할때 보만 내.'
+        )
     )
 
 if "messages" not in st.session_state:
@@ -37,7 +41,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 
-if prompt := st.chat_input("따라쟁이에게 물어보기"):
+if prompt := st.chat_input("서영이에게 물어보기"):
     with st.chat_message("user"):
         st.write(prompt)
         message = {
