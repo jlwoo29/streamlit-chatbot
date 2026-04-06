@@ -9,7 +9,7 @@ st.set_page_config(page_title="전서영 AI", page_icon=":material/face_3:")
 st.title(":violet[:material/face_3:] 전서영")
 st.caption("전서영이에요.")
 
-MODEL_NAME = "gemini-2.0-flash" # 혹은 사용 중인 모델명
+MODEL_NAME = "gemini-2.5-flash" # 혹은 사용 중인 모델명
 
 @st.cache_resource
 def get_client():
@@ -40,36 +40,33 @@ if st.sidebar.button("🔄 대화 및 설정 초기화"):
 # 시스템 프롬프트 로드
 system_prompt = load_system_prompt('system_prompt.md')
 
-# 세션 상태 초기화
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
 if "chat_session" not in st.session_state:
     st.session_state.chat_session = client.chats.create(
         model=MODEL_NAME,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
-            temperature=0.2, # 값이 낮을수록 지시사항(딱딱한 말투 등)을 더 잘 지킵니다.
+            temperature=0.2, # 값이 낮을수록 지시사항을 더 잘 지킵니다.
         )
     )
 
 # 기존 대화 출력
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
+for content in st.session_state.chat_session.get_history():
+    role = 'ai' if content.role == 'model'else 'user'
+    with st.chat_message(role):
+        for part in content.parts:
+            if part.text:
+                st.write(part.text)
+
 
 # 채팅 입력
 if prompt := st.chat_input("서영이에게 물어보기"):
     # 유저 메시지 표시 및 저장
     with st.chat_message("user"):
         st.write(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    
 
     # AI 응답 생성 및 표시
     with st.chat_message("ai"):
-        try:
-            response = st.session_state.chat_session.send_message(prompt)
-            st.write(response.text)
-            st.session_state.messages.append({"role": "ai", "content": response.text})
-        except Exception as e:
-            st.error(f"오류가 발생했습니다: {e}")
+
+        response = st.session_state.chat_session.send_message(prompt)
+        st.write(response.text)
